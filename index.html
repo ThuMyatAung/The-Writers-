@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Novel Studio — ဝတ္ထု Editor</title>
-<!-- Novel Studio v1.2 — \uc fix, Noto Sans Myanmar + font picker, compact mobile chrome -->
+<!-- Novel Studio v1.3 — strong Latin bold (Helvetica/Arial first per-character), DOCX Latin/Complex font split -->
 <style>
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -51,7 +51,7 @@
   #toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   #toolbar button{padding:6px 10px}
   #toolbar .sep{width:1px;height:22px;background:#d8cdb4}
-  #ed{max-width:760px;margin:0 auto;padding:22px 18px 40px;outline:none;min-height:50vh;font-family:"Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif;font-size:19px;line-height:1.9;background:#fffdf8;border-left:1px solid #efe6cd;border-right:1px solid #efe6cd}
+  #ed{max-width:760px;margin:0 auto;padding:22px 18px 40px;outline:none;min-height:50vh;font-family:"Helvetica Neue","Helvetica","Arial","Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif;font-size:19px;line-height:1.9;background:#fffdf8;border-left:1px solid #efe6cd;border-right:1px solid #efe6cd}
   #ed:empty:before{content:attr(data-ph);color:#a2937a}
   #ed p{margin:0 0 12px}
   #ed img{max-width:100%;height:auto;border-radius:6px}
@@ -64,7 +64,7 @@
   .card p{margin:0;color:#6b5e45;font-size:14px;white-space:pre-wrap}
   .card .meta{margin-top:8px;font-size:12px;color:#8a7a5c}
   /* Preview */
-  #preview{max-width:760px;margin:0 auto;padding:22px 18px 60px;font-family:"Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif;font-size:19px;line-height:1.9}
+  #preview{max-width:760px;margin:0 auto;padding:22px 18px 60px;font-family:"Helvetica Neue","Helvetica","Arial","Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif;font-size:19px;line-height:1.9}
   #preview h1,#preview h2{font-family:"Noto Sans Myanmar","Padauk",sans-serif}
   #preview h1{text-align:center}
   #preview img{max-width:100%;height:auto}
@@ -664,7 +664,7 @@ function buildDocx(proj,opts){
   const imgs=docxParagraph._imgs;
   const mediaRels=imgs.map((im,i)=>'<Relationship Id="rIdImg'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+im.name+'"/>').join('');
   const doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>'+body+'<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>';
-  const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Noto Sans Myanmar" w:hAnsi="Noto Sans Myanmar" w:cs="Noto Sans Myanmar"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:rPrDefault></w:docDefaults><w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:jc w:val="center"/><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="44"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:jc w:val="center"/><w:spacing w:before="480" w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="26"/></w:rPr></w:style></w:styles>';
+  const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Noto Sans Myanmar"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:rPrDefault></w:docDefaults><w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:jc w:val="center"/><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="44"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:jc w:val="center"/><w:spacing w:before="480" w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="26"/></w:rPr></w:style></w:styles>';
   const ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>';
   const files=[
     {name:'[Content_Types].xml',data:new TextEncoder().encode(ct)},
@@ -695,7 +695,7 @@ function buildEpub(proj,opts){
   const enc=new TextEncoder();
   const files=[{name:'mimetype',data:enc.encode('application/epub+zip')}];
   files.push({name:'META-INF/container.xml',data:enc.encode('<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')});
-  const css='body{font-family:"Noto Sans Myanmar","Myanmar Sangam MN",sans-serif;line-height:1.7}h1{text-align:center}img{max-width:100%}';
+  const css='body{font-family:"Helvetica Neue","Helvetica","Arial","Noto Sans Myanmar","Myanmar Sangam MN",sans-serif;line-height:1.7}h1{text-align:center}img{max-width:100%}';
   files.push({name:'OEBPS/style.css',data:enc.encode(css)});
   const flat=flattenItems(proj.items);
   const manifest=['<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>','<item id="css" href="style.css" media-type="text/css"/>'];
@@ -742,10 +742,10 @@ function buildEpub(proj,opts){
 /* ---- App logic ---- */
 const $=id=>document.getElementById(id);
 const FONTS={
-  noto:'"Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif',
-  sangam:'"Myanmar Sangam MN","Noto Sans Myanmar",sans-serif',
-  serif:'"Noto Serif Myanmar","Myanmar Sangam MN",serif',
-  padauk:'"Padauk","Noto Sans Myanmar",sans-serif',
+  noto:'"Helvetica Neue","Helvetica","Arial","Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif',
+  sangam:'"Helvetica Neue","Helvetica","Arial","Myanmar Sangam MN","Noto Sans Myanmar",sans-serif',
+  serif:'"Georgia","Times New Roman","Noto Serif Myanmar","Myanmar Sangam MN",serif',
+  padauk:'"Helvetica Neue","Helvetica","Arial","Padauk","Noto Sans Myanmar",sans-serif',
   system:'sans-serif'
 };
 function applyFont(key){
