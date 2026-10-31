@@ -1,1 +1,1223 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Novel Studio — ဝတ္ထု Editor</title>
+<!-- Novel Studio v1.1 — bookshelf (multi-book); color theme unchanged -->
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:"Noto Sans Myanmar","Padauk","Myanmar Text",system-ui,sans-serif;background:#f4efe4;color:#2b2620;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  button,select,input,textarea{font:inherit}
+  button{cursor:pointer;border:1px solid #d8cdb4;background:#fffaf0;color:#2b2620;border-radius:10px;padding:7px 12px}
+  button:hover{background:#f3e8d3}
+  button.primary{background:#8a5a2b;color:#fff;border-color:#8a5a2b}
+  button.primary:hover{background:#744a21}
+  button.danger{color:#a33327;border-color:#e0b4ad;background:#fff6f4}
+  input[type=text],select,textarea{border:1px solid #d8cdb4;border-radius:10px;padding:7px 10px;background:#fffdf8;color:#2b2620;width:100%}
+  header{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid #ddd2b8;background:#efe7d2;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0 auto 0 0;white-space:nowrap}
+  header .titlewrap{display:flex;gap:8px;align-items:center;flex:1 1 280px;min-width:0}
+  header .titlewrap input{font-weight:700}
+  .pill{font-size:12px;background:#fffaf0;border:1px solid #d8cdb4;border-radius:999px;padding:3px 10px;white-space:nowrap}
+  #layout{flex:1 1 auto;display:flex;min-height:0}
+  /* Binder */
+  #binder{width:300px;flex:0 0 300px;border-right:1px solid #ddd2b8;background:#fbf7ec;display:flex;flex-direction:column;min-height:0}
+  #binderHead{padding:10px;border-bottom:1px solid #e4d9bd;display:flex;gap:6px;flex-wrap:wrap}
+  #binderHead input{flex:1 1 120px}
+  #tree{overflow:auto;flex:1 1 auto;padding:6px}
+  .node{border-radius:8px;padding:6px 8px;margin:2px 0;cursor:pointer;display:flex;gap:6px;align-items:center}
+  .node:hover{background:#f1e8d2}
+  .node.sel{background:#e8d9b8;outline:1px solid #c9ad7a}
+  .node .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .node .wc{font-size:11px;color:#8a7a5c;white-space:nowrap}
+  .node.folder .t{font-weight:700}
+  .node .tw{color:#8a7a5c;font-size:12px;width:14px;text-align:center;flex:0 0 14px}
+  .children{margin-left:16px;border-left:1px dashed #d8cdb4;padding-left:4px}
+  #binderFoot{padding:8px;border-top:1px solid #e4d9bd;display:flex;gap:6px;flex-wrap:wrap}
+  /* Main */
+  #main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;min-height:0}
+  #viewTabs{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid #ddd2b8;background:#fbf7ec;flex-wrap:wrap}
+  #viewTabs button.sel{background:#2b2620;color:#fff;border-color:#2b2620}
+  #editorView,#boardView,#previewView{flex:1 1 auto;overflow:auto;min-height:0}
+  /* Editor */
+  #edTop{padding:10px 14px;border-bottom:1px solid #e4d9bd;display:flex;flex-direction:column;gap:8px;background:#fbf7ec}
+  #edTop .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  #edTop .row input[type=text]{flex:1 1 200px}
+  #edTop select{width:auto;flex:0 0 auto}
+  #toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  #toolbar button{padding:6px 10px}
+  #toolbar .sep{width:1px;height:22px;background:#d8cdb4}
+  #ed{max-width:760px;margin:0 auto;padding:22px 18px 40px;outline:none;min-height:50vh;font-family:"Noto Serif Myanmar","Padauk","Myanmar Text",serif;font-size:19px;line-height:1.9;background:#fffdf8;border-left:1px solid #efe6cd;border-right:1px solid #efe6cd}
+  #ed:empty:before{content:attr(data-ph);color:#a2937a}
+  #ed p{margin:0 0 12px}
+  #ed img{max-width:100%;height:auto;border-radius:6px}
+  #edNav{display:flex;gap:8px;justify-content:space-between;padding:10px 14px;border-top:1px solid #e4d9bd;background:#fbf7ec}
+  /* Board */
+  #board{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:16px}
+  .card{background:#fffdf8;border:1px solid #ddd2b8;border-radius:12px;padding:12px;cursor:pointer}
+  .card:hover{border-color:#8a5a2b}
+  .card h3{margin:0 0 6px;font-size:16px}
+  .card p{margin:0;color:#6b5e45;font-size:14px;white-space:pre-wrap}
+  .card .meta{margin-top:8px;font-size:12px;color:#8a7a5c}
+  /* Preview */
+  #preview{max-width:760px;margin:0 auto;padding:22px 18px 60px;font-family:"Noto Serif Myanmar","Padauk","Myanmar Text",serif;font-size:19px;line-height:1.9}
+  #preview h1,#preview h2{font-family:"Noto Sans Myanmar","Padauk",sans-serif}
+  #preview h1{text-align:center}
+  #preview img{max-width:100%;height:auto}
+  /* Overlay / modal */
+  .overlay{position:fixed;inset:0;background:rgba(30,22,10,.5);display:none;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto;z-index:50}
+  .overlay.open{display:flex}
+  .modal{background:#fffdf8;border-radius:16px;max-width:640px;width:100%;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+  .modal h2{margin:0 0 10px;font-size:19px}
+  .modal .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;align-items:center}
+  .modal pre{white-space:pre-wrap;background:#f4efe4;border-radius:10px;padding:10px;max-height:240px;overflow:auto;font-size:13px}
+  .snap{border:1px solid #e0d5b8;border-radius:10px;padding:8px;margin:6px 0;display:flex;gap:8px;align-items:center}
+  .snap span{flex:1;font-size:13px}
+  .hint{font-size:13px;color:#6b5e45}
+  .hidden{display:none !important}
+  #drawerBtn{display:none}
+  @media (max-width:760px){
+    #binder{position:fixed;inset:0 auto 0 0;width:86vw;max-width:340px;z-index:40;transform:translateX(-105%);transition:transform .2s;box-shadow:10px 0 30px rgba(0,0,0,.25)}
+    #binder.open{transform:none}
+    #drawerBtn{display:inline-block}
+    #ed{font-size:18px;padding:18px 14px 40px;border:none}
+    header h1{font-size:16px}
+  }
+  @media print{
+    body{height:auto;overflow:visible;display:block}
+    header,#layout #binder,#viewTabs,#edTop,#edNav,.overlay,#editorView,#boardView{display:none !important}
+    #main{display:block}
+    #previewView{display:block !important;overflow:visible}
+    #preview{max-width:none;font-size:13pt;line-height:1.8}
+  }
+</style>
+</head>
+<body>
+<header>
+  <button id="drawerBtn" title="Binder">☰</button>
+  <h1>📖 Novel Studio</h1>
+  <div class="titlewrap">
+    <input id="projTitle" type="text" placeholder="စာအုပ်ခေါင်းစဉ်">
+    <input id="projAuthor" type="text" placeholder="စာရေးသူ" style="max-width:170px">
+  </div>
+  <span class="pill" id="totalWc">0 စကားလုံး</span>
+  <button id="btnShelf">📚 စာအုပ်စင်</button>
+  <button id="btnImport">Import</button>
+  <button id="btnExport" class="primary">Export</button>
+  <button id="btnSave">ဖိုင်သိမ်း</button>
+</header>
 
+<div id="layout">
+  <aside id="binder">
+    <div id="binderHead">
+      <input id="searchBox" type="text" placeholder="ရှာရန်…">
+      <button id="btnNewScene" title="ဇာတ်ကွက်အသစ်">＋ ဇာတ်ကွက်</button>
+      <button id="btnNewFolder" title="အခန်း (folder) အသစ်">＋ အခန်း</button>
+    </div>
+    <div id="tree"></div>
+    <div id="binderFoot">
+      <button id="btnMoveUp">↑ ရွှေ့</button>
+      <button id="btnMoveDown">↓ ရွှေ့</button>
+      <button id="btnIndent">→ အထဲ</button>
+      <button id="btnOutdent">← အပြင်</button>
+      <button id="btnDup">ပွား</button>
+      <button id="btnDel" class="danger">ဖျက်</button>
+    </div>
+  </aside>
+
+  <section id="main">
+    <div id="viewTabs">
+      <button data-view="editor" class="sel">✏️ စာရေး</button>
+      <button data-view="board">🗂️ ကတ် (Corkboard)</button>
+      <button data-view="preview">📄 စာအုပ်အစီအစဉ်</button>
+      <span class="pill" id="sceneWc"></span>
+    </div>
+
+    <div id="editorView">
+      <div id="edTop">
+        <div class="row">
+          <input id="sceneTitle" type="text" placeholder="ဇာတ်ကွက် / အခန်း ခေါင်းစဉ်">
+          <select id="sceneStatus">
+            <option value="draft">မူကြမ်း</option>
+            <option value="revising">ပြင်ဆင်ဆဲ</option>
+            <option value="done">ပြီးစီး</option>
+          </select>
+          <button id="btnFontDown" title="စာလုံး သေး">A−</button>
+          <button id="btnFontUp" title="စာလုံး ကြီး">A＋</button>
+        </div>
+        <div class="row">
+          <input id="sceneSyn" type="text" placeholder="အကျဉ်းချုပ် (synopsis) — ကတ်မှာ ပြမယ်">
+        </div>
+        <div id="toolbar">
+          <button data-cmd="bold"><b>B</b></button>
+          <button data-cmd="italic"><i>I</i></button>
+          <button data-cmd="underline"><u>U</u></button>
+          <span class="sep"></span>
+          <button id="btnImg">🖼️ ပုံထည့်</button>
+          <input id="imgFile" type="file" accept="image/*" class="hidden">
+          <span class="sep"></span>
+          <button id="btnSplit" title="cursor နေရာက ဇာတ်ကွက်ခွဲ">✂️ ခွဲ</button>
+          <button id="btnMerge" title="အပေါ်ဇာတ်ကွက်နဲ့ ပြန်ဆက်">⛓️ ဆက်</button>
+          <button id="btnSnap">📸 Snapshot</button>
+          <button id="btnSnaps">Snapshots</button>
+        </div>
+      </div>
+      <div id="ed" contenteditable="true" data-ph="ဒီမှာ ရေးပါ…"></div>
+      <div id="edNav">
+        <button id="btnPrev">← အရင် ဇာတ်ကွက်</button>
+        <button id="btnNext">နောက် ဇာတ်ကွက် →</button>
+      </div>
+    </div>
+
+    <div id="boardView" class="hidden"><div id="board"></div></div>
+    <div id="previewView" class="hidden"><div id="preview"></div></div>
+  </section>
+</div>
+
+<div class="overlay" id="ovImport"><div class="modal">
+  <h2>Import — Scrivener ကနေ ယူမယ်</h2>
+  <p class="hint">နည်း ၂ ခု ရှိတယ်။ ဖုန်းမှာ ဆိုရင် zip နည်းက အလွယ်ဆုံးပဲ — Mac မှာ .scriv ကို right-click → Compress လုပ်ပြီး zip ရလာတာကို ဒီမှာ ရွေးပေးရုံပဲ။</p>
+  <div class="row">
+    <button id="btnImpZip" class="primary">📦 .scriv zip ရွေး</button>
+    <input id="impZip" type="file" accept=".zip" class="hidden">
+    <button id="btnImpFolder">📁 Export Files folder ရွေး</button>
+    <input id="impFolder" type="file" webkitdirectory class="hidden">
+    <button id="btnImpFiles">📄 ဖိုင်တွေ ရွေး</button>
+    <input id="impFiles" type="file" multiple accept=".rtf,.txt" class="hidden">
+    <button id="btnImpJson">💾 Project JSON ဖွင့်</button>
+    <input id="impJson" type="file" accept=".json" class="hidden">
+  </div>
+  <p class="hint">zip နည်းက .scrivx အစီအစဉ်အတိုင်း အတိအကျ ရမယ်။ Folder နည်းက ဖိုင်နာမည်အလိုက် စီမယ် (အစီအစဉ် အတိအကျ လိုချင်ရင် ဖိုင်နာမည်ရှေ့မှာ 01, 02… ထည့်ပြီး Export လုပ်ပါ)။</p>
+  <pre id="impReport" class="hidden"></pre>
+  <div class="row"><button id="btnImpClose">ပိတ်</button></div>
+</div></div>
+
+<div class="overlay" id="ovExport"><div class="modal">
+  <h2>Export — ထုတ်မယ်</h2>
+  <div class="row">
+    <label><input type="checkbox" id="expSceneTitles" checked> ဇာတ်ကွက်ခေါင်းစဉ်တွေ ထည့်မယ်</label>
+  </div>
+  <div class="row">
+    <button id="btnExpDocx" class="primary">Word (.docx)</button>
+    <button id="btnExpEpub">ePub</button>
+    <button id="btnExpPdf">PDF (Print)</button>
+  </div>
+  <div class="row">
+    <button id="btnExpRtf">📁 RTF folder (zip) — Scrivener ထဲ ပြန်ထည့်လို့ရ</button>
+    <button id="btnExpJson">Project JSON</button>
+  </div>
+  <p class="hint">RTF folder ကို Scrivener ထဲ ပြန်ထည့်ချင်ရင် unzip လုပ်ပြီး ဖိုင်တွေကို binder ထဲ drag &amp; drop လုပ်ရုံပဲ။</p>
+  <div class="row"><button id="btnExpClose">ပိတ်</button></div>
+</div></div>
+
+<div class="overlay" id="ovShelf"><div class="modal">
+  <h2>📚 စာအုပ်စင်</h2>
+  <p class="hint">စာအုပ်တစ်အုပ်ကို နှိပ်ရင် အဲဒီစာအုပ်ကို ဖွင့်မယ်။ Import လုပ်တိုင်း စာအုပ်အသစ် တစ်အုပ် အဖြစ် ဒီစင်ပေါ် ရောက်မယ် — လက်ရှိရေးနေတဲ့ စာအုပ် အပေါ် ရေးမသွားဘူး။</p>
+  <div id="shelfList"></div>
+  <div class="row">
+    <button id="btnShelfNew" class="primary">＋ စာအုပ်အသစ်</button>
+    <button id="btnShelfClose">ပိတ်</button>
+  </div>
+</div></div>
+
+<div class="overlay" id="ovSnaps"><div class="modal">
+  <h2>Snapshots</h2>
+  <div id="snapList"></div>
+  <div class="row"><button id="btnSnapClose">ပိတ်</button></div>
+</div></div>
+
+<script>
+/* PURE-START: functions in this block are dependency-free and Node-tested */
+function uid(){return 'n'+Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
+function escXml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function escHtml(s){return escXml(s)}
+function wcOfText(t){if(!t)return 0;return t.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').trim().split(/\s+/).filter(Boolean).length}
+function stripHtml(html){if(!html)return '';return html.replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'")}
+/* CRC32 for stored (uncompressed) zip entries */
+const CRC_TABLE=(function(){const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0}return t})();
+function crc32(bytes){let c=0xFFFFFFFF;for(let i=0;i<bytes.length;i++)c=CRC_TABLE[(c^bytes[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+/* Minimal ZIP writer: stored entries only (readable by Word, ePub readers, unzip) */
+function zipWrite(files){
+  const chunks=[];const central=[];let offset=0;
+  const enc=new TextEncoder();
+  files.forEach(f=>{
+    const name=enc.encode(f.name);const data=f.data;
+    const crc=crc32(data);
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0,true);lh.setUint16(8,0,true);
+    lh.setUint16(10,0,true);lh.setUint16(12,0,true);lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);
+    lh.setUint16(26,name.length,true);lh.setUint16(28,0,true);
+    chunks.push(new Uint8Array(lh.buffer),name,data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0,true);ch.setUint16(10,0,true);
+    ch.setUint16(12,0,true);ch.setUint16(14,0,true);ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);
+    ch.setUint16(28,name.length,true);ch.setUint16(30,0,true);ch.setUint16(32,0,true);ch.setUint16(34,0,true);ch.setUint16(36,0,true);ch.setUint32(38,0,true);ch.setUint32(42,offset,true);
+    central.push(new Uint8Array(ch.buffer),name);
+    offset+=30+name.length+data.length;
+  });
+  const cdSize=central.reduce((a,c)=>a+c.length,0);
+  const end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cdSize,true);end.setUint32(16,offset,true);end.setUint16(20,0,true);
+  const parts=[...chunks,...central,new Uint8Array(end.buffer)];
+  let total=0;parts.forEach(p=>total+=p.length);
+  const out=new Uint8Array(total);let o=0;parts.forEach(p=>{out.set(p,o);o+=p.length});
+  return out;
+}
+/* ZIP reader: stored + deflated (via DecompressionStream) */
+async function zipRead(buf){
+  const bytes=buf instanceof Uint8Array?buf:new Uint8Array(buf);
+  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  let cdOff=-1,cdCount=0;
+  for(let i=bytes.length-22;i>=0;i--){
+    if(view.getUint32(i,true)===0x06054b50){cdCount=view.getUint16(i+10,true);cdOff=view.getUint32(i+16,true);break}
+    if(i===0)break;
+  }
+  const dec=new TextDecoder();
+  const out=[];
+  if(cdOff<0)throw new Error('zip central directory မတွေ့ပါ');
+  let p=cdOff;
+  for(let n=0;n<cdCount;n++){
+    if(view.getUint32(p,true)!==0x02014b50)break;
+    const method=view.getUint16(p+10,true);
+    const compSize=view.getUint32(p+20,true);
+    const nameLen=view.getUint16(p+28,true),extraLen=view.getUint16(p+30,true),commentLen=view.getUint16(p+32,true);
+    const name=dec.decode(bytes.subarray(p+46,p+46+nameLen));
+    const lhOff=view.getUint32(p+42,true);
+    const lhNameLen=view.getUint16(lhOff+26,true),lhExtraLen=view.getUint16(lhOff+28,true);
+    const dataStart=lhOff+30+lhNameLen+lhExtraLen;
+    const comp=bytes.subarray(dataStart,dataStart+compSize);
+    let data;
+    if(method===0)data=comp.slice();
+    else if(method===8){
+      if(typeof DecompressionStream==='undefined')throw new Error('ဒီ browser က zip ဖြည်တာကို မထောက်ပံ့ပါ');
+      const ds=new DecompressionStream('deflate-raw');
+      const stream=new Blob([comp]).stream().pipeThrough(ds);
+      data=new Uint8Array(await new Response(stream).arrayBuffer());
+    } else throw new Error('zip method '+method+' မထောက်ပံ့ပါ: '+name);
+    out.push({name,data});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return out;
+}
+function bytesToLatin1(bytes){let s='';const CH=8192;for(let i=0;i<bytes.length;i+=CH)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));return s}
+function latin1ToBytes(s){const b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i)&0xFF;return b}
+function hexToBytes(hex){const clean=hex.replace(/\s+/g,'');const out=new Uint8Array(clean.length/2);for(let i=0;i<out.length;i++)out[i]=parseInt(clean.substr(i*2,2),16);return out}
+function bytesToHex(bytes){let h='';for(let i=0;i<bytes.length;i++)h+=bytes[i].toString(16).padStart(2,'0');return h}
+function b64ToBytes(b64){const bin=atob(b64);const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out}
+function bytesToB64(bytes){let s='';const CH=8192;for(let i=0;i<bytes.length;i+=CH)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));return btoa(s)}
+/* HTML (editor canonical: p, br, b, i, u, img) -> runs [{align, runs:[{text,b,i,u,img}]}] */
+function htmlToRuns(html){
+  if(!html)return [];
+  const paras=[];let cur={align:'left',runs:[]};let run={text:'',b:false,i:false,u:false};
+  const flush=()=>{if(run.text){cur.runs.push(run);run={text:'',b:run.b,i:run.i,u:run.u}}};
+  const newPara=(align)=>{flush();paras.push(cur);cur={align:align||'left',runs:[]};run={text:'',b:false,i:false,u:false}};
+  const re=/<img[^>]*src="([^"]+)"[^>]*>|<\/?(p|div|br|b|strong|i|em|u)\b([^>]*)>|([^<]+)/gi;
+  let m,paraOpen=false;
+  const styleAlign=(attrs)=>{const mm=/text-align:\s*(center|right|justify)/i.exec(attrs||'');return mm?mm[1]:null};
+  while((m=re.exec(html))){
+    if(m[1]!==undefined){flush();cur.runs.push({img:m[1]});continue}
+    if(m[2]){
+      const tag=m[2].toLowerCase();const closing=html[m.index+1]==='/';const attrs=m[3]||'';
+      if(tag==='br'){flush();run.text+='\n';flush();continue}
+      if(tag==='p'||tag==='div'){
+        if(closing){if(paraOpen)newPara();paraOpen=false}
+        else{if(paraOpen)newPara();paraOpen=true;const al=styleAlign(attrs);if(al)cur.align=al}
+        continue;
+      }
+      if(tag==='b'||tag==='strong'){flush();run.b=!closing;continue}
+      if(tag==='i'||tag==='em'){flush();run.i=!closing;continue}
+      if(tag==='u'){flush();run.u=!closing;continue}
+      continue;
+    }
+    if(m[4]!==undefined){
+      const txt=m[4].replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+      run.text+=txt;
+    }
+  }
+  flush();paras.push(cur);
+  while(paras.length>1&&paras[paras.length-1].runs.length===0)paras.pop();
+  return paras;
+}
+function runsToPlain(paras){return paras.map(p=>p.runs.map(r=>r.img?'[ပုံ]':r.text).join('')).join('\n')}
+/* RTF -> HTML (handles Scrivener RTF: \b \i \ul \par \uN \'hh \pict, skips fonttbl/colortbl/etc.) */
+function rtfToHtml(rtf){
+  const SKIP_DESTS={fonttbl:1,colortbl:1,stylesheet:1,info:1,object:1,shppict:1,rsidtbl:1,datastore:1,themedata:1,colorschememapping:1,latentstyles:1};
+  let i=0;const n=rtf.length;
+  let html='';let paraOpen=false;let align='left';
+  let fmt={b:false,i:false,u:false};
+  let stack=[];
+  let runText='';
+  const curSkip=()=>stack.length?!!stack[stack.length-1].skip:false;
+  const flushRun=()=>{if(!runText)return;let t=escHtml(runText);if(fmt.u)t='<u>'+t+'</u>';if(fmt.i)t='<i>'+t+'</i>';if(fmt.b)t='<b>'+t+'</b>';html+=t;runText=''};
+  const openPara=()=>{if(!paraOpen){html+='<p'+(align!=='left'?' style="text-align:'+align+'"':'')+'>';paraOpen=true}};
+  const closePara=()=>{if(paraOpen){flushRun();html+='</p>';paraOpen=false}};
+  const setFmt=(k,v)=>{if(fmt[k]!==v){flushRun();fmt[k]=v}};
+  const pushFrame=()=>{stack.push({fmt:{...fmt},align,skip:curSkip()});};
+  const popFrame=()=>{const f=stack.pop();if(f){fmt=f.fmt;align=f.align;}};
+  while(i<n){
+    const ch=rtf[i];
+    if(ch==='{'){pushFrame();i++;continue}
+    if(ch==='}'){popFrame();i++;continue}
+    if(ch==='\\'){
+      i++;
+      if(i>=n)break;
+      const nc=rtf[i];
+      if(nc==='*' ){ /* destination marker: next control word marks a group to skip */
+        i++;
+        let w='';while(i<n&&/[a-zA-Z]/.test(rtf[i])){w+=rtf[i];i++}
+        let num='';if(i<n&&/[-0-9]/.test(rtf[i])){while(i<n&&/[-0-9]/.test(rtf[i])){num+=rtf[i];i++}}
+        if(i<n&&rtf[i]===' ')i++;
+        if(stack.length)stack[stack.length-1].skip=true;
+        continue;
+      }
+      if(nc==="'"){
+        const hex=rtf.substr(i+1,2);i+=3;
+        if(!curSkip()){openPara();runText+=String.fromCharCode(parseInt(hex,16)||63)}
+        continue;
+      }
+      if(!/[a-zA-Z]/.test(nc)){
+        const lit=nc;i++;
+        if(i<n&&rtf[i]===' ')i++;
+        if(!curSkip()&&lit!=='\n'&&lit!=='\r'){openPara();if(lit==='~')runText+=' ';else if(lit==='-')runText+='-';else if(lit==='_')runText+='-';else runText+=lit}
+        continue;
+      }
+      let w='';while(i<n&&/[a-zA-Z]/.test(rtf[i])){w+=rtf[i];i++}
+      let num=null;if(i<n&&/[-0-9]/.test(rtf[i])){let s='';while(i<n&&/[-0-9]/.test(rtf[i])){s+=rtf[i];i++}num=parseInt(s,10)}
+      if(i<n&&rtf[i]===' ')i++;
+      if(SKIP_DESTS[w]){if(stack.length)stack[stack.length-1].skip=true;continue}
+      if(curSkip())continue;
+      if(w==='pict'){
+        /* Parse the pict group properly: control words first, then raw hex data until '}'. */
+        let imgType='png';
+        while(i<n){
+          while(i<n&&/\s/.test(rtf[i]))i++;
+          if(i<n&&rtf[i]==='\\'&&/[a-zA-Z]/.test(rtf[i+1]||'')){
+            i++;let cw='';while(i<n&&/[a-zA-Z]/.test(rtf[i])){cw+=rtf[i];i++}
+            let cn='';if(i<n&&/[-0-9]/.test(rtf[i])){while(i<n&&/[-0-9]/.test(rtf[i])){cn+=rtf[i];i++}}
+            if(i<n&&rtf[i]===' ')i++;
+            if(cw==='jpegblip')imgType='jpeg';else if(cw==='pngblip')imgType='png';
+            continue;
+          }
+          break;
+        }
+        let hex='';
+        while(i<n&&rtf[i]!=='}'){const c=rtf[i];if(/[0-9a-fA-F]/.test(c))hex+=c;i++}
+        try{const bytes=hexToBytes(hex);if(bytes.length>8){openPara();flushRun();html+='<img src="data:image/'+imgType+';base64,'+bytesToB64(bytes)+'">'}}catch(e){}
+        continue;
+      }
+      switch(w){
+        case 'par':closePara();break;
+        case 'pard':closePara();fmt={b:false,i:false,u:false};align='left';break;
+        case 'line':openPara();flushRun();html+='<br>';break;
+        case 'tab':openPara();runText+='    ';break;
+        case 'plain':flushRun();fmt={b:false,i:false,u:false};break;
+        case 'b':setFmt('b',num!==0);break;
+        case 'i':setFmt('i',num!==0);break;
+        case 'ul':setFmt('u',num!==0);break;
+        case 'ulnone':setFmt('u',false);break;
+        case 'qc':align='center';break;
+        case 'ql':align='left';break;
+        case 'qr':align='right';break;
+        case 'qj':align='justify';break;
+        case 'u':{
+          if(num!==null){
+            let code=num;if(code<0)code+=65536;
+            openPara();
+            const skipFallback=()=>{if(rtf[i]==="'")i+=3;else if(i<n)i++};
+            if(code>=0xD800&&code<=0xDBFF){
+              skipFallback();
+              const m2=/^\\u(-?\d+)/.exec(rtf.slice(i));
+              if(m2){let lo=parseInt(m2[1],10);if(lo<0)lo+=65536;
+                if(lo>=0xDC00&&lo<=0xDFFF){runText+=String.fromCharCode(code,lo);i+=m2[0].length;if(rtf[i]===' ')i++;skipFallback();break}}
+              runText+=String.fromCharCode(code);
+            } else { runText+=String.fromCharCode(code); skipFallback(); }
+          }
+          break;
+        }
+        default:break;
+      }
+      continue;
+    }
+    if(ch==='\n'||ch==='\r'){i++;continue}
+    if(!curSkip()){openPara();runText+=ch}
+    i++;
+  }
+  closePara();
+  return html;
+}
+/* HTML -> RTF (for the Scrivener round-trip folder export) */
+function htmlToRtf(html){
+  const paras=htmlToRuns(html);
+  let body='';
+  paras.forEach(p=>{
+    let line='\\pard\\ql ';
+    if(p.align==='center')line='\\pard\\qc ';else if(p.align==='right')line='\\pard\\qr ';else if(p.align==='justify')line='\\pard\\qj ';
+    p.runs.forEach(r=>{
+      if(r.img){
+        const mm=/^data:image\/(png|jpeg);base64,(.+)$/.exec(r.img);
+        if(mm){try{const bytes=b64ToBytes(mm[2]);line+=' {\\pict\\'+(mm[1]==='png'?'pngblip':'jpegblip')+'\\picwgoal'+(480*15)+'\\pichgoal'+(320*15)+' '+bytesToHex(bytes)+'}'}catch(e){}}
+        return;
+      }
+      let t='';
+      for(const ch of r.text){
+        const code=ch.codePointAt(0);
+        if(code===92)t+='\\\\';else if(code===123)t+='\\{';else if(code===125)t+='\\}';
+        else if(code>=32&&code<127)t+=ch;
+        else if(code>65535){const v=code-0x10000;const hi=0xD800+(v>>10),lo=0xDC00+(v&0x3FF);t+='\\u'+hi+'?\\u'+lo+'?'}
+        else t+='\\u'+code+'?';
+      }
+      if(!t)return;
+      line+=(r.b?'\\b ':'')+(r.i?'\\i ':'')+(r.u?'\\ul ':'')+t+(r.b?'\\b0 ':'')+(r.i?'\\i0 ':'')+(r.u?'\\ulnone ':'');
+    });
+    body+=line+'\\par\n';
+  });
+  return '{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Noto Sans Myanmar;}}\n'+body+'}';
+}
+function rtfEscapeTitle(s){return s.replace(/[\\/:*?"<>|]/g,'_')}
+/* ---- Tiny XML parser (for .scrivx) ---- */
+function parseXml(t){
+  let i=0;const n=t.length;
+  const skipMisc=()=>{while(i<n){if(t.startsWith('<?',i)){i=t.indexOf('?>',i);if(i<0)return;i+=2}else if(t.startsWith('<!--',i)){i=t.indexOf('-->',i);if(i<0)return;i+=3}else if(t.startsWith('<!',i)){i=t.indexOf('>',i);if(i<0)return;i+=1}else if(/\s/.test(t[i]))i++;else break}};
+  const decEnt=(s)=>s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&apos;/g,"'");
+  function parseNode(){
+    skipMisc();
+    if(i>=n||t[i]!=='<')return null;
+    if(t.startsWith('</',i))return null;
+    const gt=t.indexOf('>',i);if(gt<0)return null;
+    let tag=t.slice(i+1,gt);i=gt+1;
+    const selfClose=tag.endsWith('/');if(selfClose)tag=tag.slice(0,-1);
+    const m=/^([^\s]+)/.exec(tag);const name=m?m[1]:'';
+    const attrs={};const am=/([A-Za-z_:][\w:.-]*)\s*=\s*"([^"]*)"/g;let am2;
+    while((am2=am.exec(tag)))attrs[am2[1]]=decEnt(am2[2]);
+    const node={tag:name,attrs,children:[],text:''};
+    if(selfClose)return node;
+    while(i<n){
+      if(t.startsWith('</',i)){const e=t.indexOf('>',i);i=e<0?n:e+1;break}
+      if(t.startsWith('<!--',i)){i=t.indexOf('-->',i);i=i<0?n:i+3;continue}
+      if(t.startsWith('<![CDATA[',i)){const e=t.indexOf(']]>',i);node.text+=t.slice(i+9,e<0?n:e);i=e<0?n:e+3;continue}
+      if(t[i]==='<'){const c=parseNode();if(c)node.children.push(c);continue}
+      const lt=t.indexOf('<',i);const txt=t.slice(i,lt<0?n:lt);node.text+=decEnt(txt);i=lt<0?n:lt;
+    }
+    return node;
+  }
+  return parseNode();
+}
+function findChild(node,tag){if(!node)return null;return node.children.find(c=>c.tag===tag)||null}
+function findAll(node,tag,out){out=out||[];if(!node)return out;node.children.forEach(c=>{if(c.tag===tag)out.push(c);findAll(c,tag,out)});return out}
+/* Parse a Scrivener .scrivx into {tree:[items], map:{uuid->item}}.
+   Item: {id, type:'folder'|'scene', title, synopsis:'', status:'draft', html:'', children:[]} */
+function parseScrivx(xmlText){
+  const root=parseXml(xmlText);
+  if(!root)throw new Error('.scrivx ကို ဖတ်မရပါ');
+  let binder=findChild(root,'Binder');
+  if(!binder){const all=findAll(root,'Binder');binder=all[0]}
+  if(!binder)throw new Error('Binder မတွေ့ပါ');
+  const map={};
+  function conv(bi){
+    const uuid=bi.attrs.UUID||bi.attrs.ID||'';
+    const typeRaw=(bi.attrs.Type||'').toLowerCase();
+    const isFolder=typeRaw.indexOf('folder')>=0||typeRaw.indexOf('draft')>=0;
+    const titleNode=findChild(bi,'Title');
+    const synNode=findChild(bi,'Synopsis');
+    const item={id:uid(),type:isFolder?'folder':'scene',title:titleNode?titleNode.text.trim():'(အမည်မရှိ)',synopsis:synNode?synNode.text.trim():'',status:'draft',html:'',children:[],_uuid:uuid};
+    if(uuid)map[uuid]=item;
+    const ch=findChild(bi,'Children');
+    if(ch)ch.children.filter(c=>c.tag==='BinderItem').forEach(c=>{const kid=conv(c);if(kid)item.children.push(kid)});
+    return item;
+  }
+  const top=binder.children.filter(c=>c.tag==='BinderItem');
+  const tree=[];
+  top.forEach(bi=>{
+    const titleNode=findChild(bi,'Title');
+    const title=titleNode?titleNode.text.trim():'';
+    if(title.toLowerCase()==='trash')return;
+    const item=conv(bi);
+    if(item)tree.push(item);
+  });
+  return {tree,map};
+}
+/* Build a tree from Export Files folder entries [{path, name, data}] */
+function buildTreeFromFiles(files){
+  const root={id:uid(),type:'folder',title:'',synopsis:'',status:'draft',html:'',children:[]};
+  const byPath={'':root};
+  const natSort=(a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});
+  const sorted=[...files].sort((a,b)=>natSort(a.path,b.path));
+  sorted.forEach(f=>{
+    const parts=f.path.split('/').filter(Boolean);
+    if(!parts.length)return;
+    let parent=root;let curPath='';
+    for(let k=0;k<parts.length-1;k++){
+      curPath+= (curPath?'/':'')+parts[k];
+      if(!byPath[curPath]){const fo={id:uid(),type:'folder',title:parts[k],synopsis:'',status:'draft',html:'',children:[]};byPath[curPath]=fo;parent.children.push(fo)}
+      parent=byPath[curPath];
+    }
+    const fname=parts[parts.length-1];
+    const dot=fname.lastIndexOf('.');
+    const ext=dot>=0?fname.slice(dot+1).toLowerCase():'';
+    const base=dot>=0?fname.slice(0,dot):fname;
+    if(ext==='rtf'){
+      const item={id:uid(),type:'scene',title:base,synopsis:'',status:'draft',html:rtfToHtml(bytesToLatin1(f.data)),children:[]};
+      parent.children.push(item);
+    } else if(ext==='txt'){
+      const text=new TextDecoder().decode(f.data);
+      const html=text.split(/\n\s*\n/).map(p=>'<p>'+escHtml(p.trim()).replace(/\n/g,'<br>')+'</p>').join('');
+      parent.children.push({id:uid(),type:'scene',title:base,synopsis:'',status:'draft',html,children:[]});
+    }
+  });
+  return root.children;
+}
+/* Flatten tree (pre-order) for compile/export */
+function flattenItems(items,out){
+  out=out||[];
+  items.forEach(it=>{out.push(it);if(it.children&&it.children.length)flattenItems(it.children,out)});
+  return out;
+}
+/* ---- DOCX builder ---- */
+function pngDims(bytes){
+  if(bytes.length>=24&&bytes[0]===0x89&&bytes[1]===0x50){
+    const w=(bytes[16]<<24)|(bytes[17]<<16)|(bytes[18]<<8)|bytes[19];
+    const h=(bytes[20]<<24)|(bytes[21]<<16)|(bytes[22]<<8)|bytes[23];
+    if(w>0&&h>0)return {w,h};
+  }
+  return null;
+}
+function docxParagraph(paras,style,align){
+  let xml='';
+  paras.forEach(p=>{
+    const jc=align||p.align;
+    let runs='';
+    p.runs.forEach(r=>{
+      if(r.img){
+        const mm=/^data:image\/(png|jpeg);base64,(.+)$/.exec(r.img);
+        if(mm){
+          let imgData=null;try{imgData=b64ToBytes(mm[2])}catch(e){imgData=null}
+          if(imgData){
+            const idx=docxParagraph._imgCount=(docxParagraph._imgCount||0)+1;
+            let cx=4572000,cy=3048000;
+            try{const d=pngDims(imgData);if(d){const maxW=480;const w=Math.min(d.w,maxW);const h=Math.round(d.h*w/d.w);cx=w*9525;cy=h*9525}}catch(e){}
+            docxParagraph._imgs.push({name:'media/image'+idx+'.'+(mm[1]==='png'?'png':'jpg'),data:imgData});
+            runs+='<w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><wp:extent cx="'+cx+'" cy="'+cy+'"/><wp:docPr id="'+idx+'" name="Image'+idx+'"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="'+idx+'" name="Image'+idx+'"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg'+idx+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"/></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
+          }
+        }
+        return;
+      }
+      const t=r.text;if(!t)return;
+      let rpr='';
+      if(r.b||r.i||r.u)rpr='<w:rPr>'+(r.b?'<w:b/>':'')+(r.i?'<w:i/>':'')+(r.u?'<w:u w:val="single"/>':'')+'</w:rPr>';
+      runs+='<w:r>'+rpr+'<w:t xml:space="preserve">'+escXml(t)+'</w:t></w:r>';
+    });
+    xml+='<w:p>'+(style?'<w:pPr><w:pStyle w:val="'+style+'"/>'+(jc&&jc!=='left'?'<w:jc w:val="'+jc+'"/>':'')+'</w:pPr>':'<w:pPr>'+(jc&&jc!=='left'?'<w:jc w:val="'+jc+'"/>':'')+'</w:pPr>')+runs+'</w:p>';
+  });
+  return xml;
+}
+function buildDocx(proj,opts){
+  opts=opts||{};
+  docxParagraph._imgCount=0;docxParagraph._imgs=[];
+  let body='';
+  if(proj.title)body+=docxParagraph([{align:'center',runs:[{text:proj.title,b:true}]}],'Title');
+  if(proj.author)body+=docxParagraph([{align:'center',runs:[{text:proj.author}]}],null);
+  flattenItems(proj.items).forEach(it=>{
+    if(it.type==='folder'){
+      body+=docxParagraph([{align:'center',runs:[{text:it.title,b:true}]}],'Heading1');
+      if(it.html)body+=docxParagraph(htmlToRuns(it.html),null);
+    } else {
+      if(opts.sceneTitles!==false)body+=docxParagraph([{align:'left',runs:[{text:it.title,b:true}]}],'Heading2');
+      if(it.html)body+=docxParagraph(htmlToRuns(it.html),null);
+    }
+  });
+  const imgs=docxParagraph._imgs;
+  const mediaRels=imgs.map((im,i)=>'<Relationship Id="rIdImg'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+im.name+'"/>').join('');
+  const doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>'+body+'<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>';
+  const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Noto Sans Myanmar" w:hAnsi="Noto Sans Myanmar" w:cs="Noto Sans Myanmar"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:rPrDefault></w:docDefaults><w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:jc w:val="center"/><w:spacing w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="44"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:jc w:val="center"/><w:spacing w:before="480" w:after="240"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="26"/></w:rPr></w:style></w:styles>';
+  const ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>';
+  const files=[
+    {name:'[Content_Types].xml',data:new TextEncoder().encode(ct)},
+    {name:'_rels/.rels',data:new TextEncoder().encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>')},
+    {name:'word/document.xml',data:new TextEncoder().encode(doc)},
+    {name:'word/styles.xml',data:new TextEncoder().encode(styles)},
+    {name:'word/_rels/document.xml.rels',data:new TextEncoder().encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+mediaRels+'</Relationships>')},
+    {name:'docProps/core.xml',data:new TextEncoder().encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"><dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">'+escXml(proj.title||'')+'</dc:title><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">'+escXml(proj.author||'')+'</dc:creator></cp:coreProperties>')},
+    {name:'docProps/app.xml',data:new TextEncoder().encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Novel Studio</Application></Properties>')},
+  ];
+  imgs.forEach(im=>files.push({name:'word/'+im.name,data:im.data}));
+  return zipWrite(files);
+}
+/* ---- ePub builder (EPUB 2, widest reader support) ---- */
+function runsToXhtml(paras){
+  return paras.map(p=>{
+    const inner=p.runs.map(r=>{
+      if(r.img)return '<img src="'+escXml(r.img)+'" alt=""/>';
+      let t=escXml(r.text);
+      if(r.u)t='<u>'+t+'</u>';if(r.i)t='<em>'+t+'</em>';if(r.b)t='<strong>'+t+'</strong>';
+      return t;
+    }).join('');
+    return '<p'+(p.align&&p.align!=='left'?' style="text-align:'+p.align+'"':'')+'>'+inner+'</p>';
+  }).join('\n');
+}
+function buildEpub(proj,opts){
+  opts=opts||{};
+  const enc=new TextEncoder();
+  const files=[{name:'mimetype',data:enc.encode('application/epub+zip')}];
+  files.push({name:'META-INF/container.xml',data:enc.encode('<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')});
+  const css='body{font-family:serif;line-height:1.7}h1{text-align:center}img{max-width:100%}';
+  files.push({name:'OEBPS/style.css',data:enc.encode(css)});
+  const flat=flattenItems(proj.items);
+  const manifest=['<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>','<item id="css" href="style.css" media-type="text/css"/>'];
+  const spine=[];const navPoints=[];
+  let imgCount=0;const imgMap={};
+  const imgFile=(src)=>{
+    if(imgMap[src])return imgMap[src];
+    const mm=/^data:image\/(png|jpeg);base64,(.+)$/.exec(src);
+    if(!mm)return null;
+    imgCount++;
+    const ext=mm[1]==='png'?'png':'jpg';
+    const name='images/img'+imgCount+'.'+ext;
+    imgMap[src]=name;
+    files.push({name:'OEBPS/'+name,data:b64ToBytes(mm[2])});
+    manifest.push('<item id="img'+imgCount+'" href="'+name+'" media-type="image/'+(ext==='png'?'png':'jpeg')+'"/>');
+    return name;
+  };
+  const fixImgs=(html)=>html.replace(/<img[^>]*src="([^"]+)"[^>]*>/g,(m,src)=>{const f=imgFile(src);return f?'<img src="'+f+'" alt=""/>':''});
+  let fileIdx=0;
+  const sections=[];
+  flat.forEach(it=>{
+    fileIdx++;
+    const fname='chap'+String(fileIdx).padStart(3,'0')+'.xhtml';
+    let body='';
+    if(it.type==='folder')body+='<h1>'+escHtml(it.title)+'</h1>';
+    else if(opts.sceneTitles!==false)body+='<h2>'+escHtml(it.title)+'</h2>';
+    if(it.html)body+=runsToXhtml(htmlToRuns(fixImgs(it.html)));
+    if(!body)body='<p></p>';
+    const xhtml='<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>'+escXml(it.title)+'</title><link rel="stylesheet" href="style.css"/></head><body>'+body+'</body></html>';
+    files.push({name:'OEBPS/'+fname,data:enc.encode(xhtml)});
+    manifest.push('<item id="f'+fileIdx+'" href="'+fname+'" media-type="application/xhtml+xml"/>');
+    spine.push('<itemref idref="f'+fileIdx+'"/>');
+    navPoints.push('<navPoint id="np'+fileIdx+'" playOrder="'+fileIdx+'"><navLabel><text>'+escXml(it.title)+'</text></navLabel><content src="'+fname+'"/></navPoint>');
+  });
+  const opf='<?xml version="1.0" encoding="utf-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf"><dc:title>'+escXml(proj.title||'Untitled')+'</dc:title><dc:creator>'+escXml(proj.author||'')+'</dc:creator><dc:language>my</dc:language><dc:identifier id="bookid">novel-studio-'+Date.now()+'</dc:identifier></metadata><manifest>'+manifest.join('')+'</manifest><spine toc="ncx">'+spine.join('')+'</spine></package>';
+  files.push({name:'OEBPS/content.opf',data:enc.encode(opf)});
+  const ncx='<?xml version="1.0" encoding="utf-8"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head></head><docTitle><text>'+escXml(proj.title||'Untitled')+'</text></docTitle><navMap>'+navPoints.join('')+'</navMap></ncx>';
+  files.push({name:'OEBPS/toc.ncx',data:enc.encode(ncx)});
+  return zipWrite(files);
+}
+/* PURE-END */
+</script>
+<script>
+/* ---- App logic ---- */
+const $=id=>document.getElementById(id);
+const LS_KEY='novel_studio_v1';
+const SHELF_KEY='novel_studio_shelf_v1';
+let proj=null, selId=null, view='editor', saveTimer=null;
+let shelf={books:[],currentId:null};
+
+function demoProject(){
+  const s=(t,h)=>({id:uid(),type:'scene',title:t,synopsis:'',status:'draft',html:h,children:[],snaps:[]});
+  const f=(t,kids)=>({id:uid(),type:'folder',title:t,synopsis:'',status:'draft',html:'',children:kids,snaps:[]});
+  return {title:'စမ်းသပ်စာအုပ်',author:'',items:[
+    f('အခန်း ၁ — အစ',[
+      s('ပထမဆုံး ဇာတ်ကွက်','<p>ဒါက စမ်းသပ်ဖို့ ထည့်ထားတဲ့ ဇာတ်ကွက်ပါ။ ဘယ်ဘက်က Binder မှာ အခန်း/ဇာတ်ကွက်တွေ စီထားတာ မြင်ရမယ်။</p><p><b>Bold</b>၊ <i>Italic</i>၊ ပုံတွေ ထည့်လို့ ရတယ်။ ဖုန်းနဲ့ သုံးရင် ဘယ်ဘက်အပေါ်က ☰ ကို နှိပ်ပြီး Binder ကို ဖွင့်/ပိတ် လုပ်ပါ။</p>'),
+      s('ဒုတိယ ဇာတ်ကွက်','<p>Import လုပ်ချင်ရင် အပေါ်က Import ကို နှိပ်ပါ။ .scriv zip ဆို အစီအစဉ်အတိုင်း အတိအကျ ရမယ်။ Export Files folder ဆို ဖိုင်နာမည်အလိုက် စီမယ်။</p>'),
+    ]),
+    f('အခန်း ၂ — အလယ်',[s('သုံးပုံ ဇာတ်ကွက်','<p>Export မှာ Word (.docx)၊ ePub၊ PDF (Print)၊ Scrivener ထဲ ပြန်ထည့်လို့ရတဲ့ RTF folder၊ Project JSON ဆိုပြီး ရွေးလို့ ရတယ်။</p>')]),
+  ]};
+}
+function saveSoon(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,400)}
+function saveShelf(){
+  if(!proj)return;
+  proj.updatedAt=Date.now();
+  try{localStorage.setItem(SHELF_KEY,JSON.stringify(shelf))}catch(e){}
+}
+function saveNow(){
+  if(!proj)return;
+  commitEdits(true);
+  saveShelf();
+  updateCounts();
+}
+function loadShelf(){
+  try{
+    const raw=localStorage.getItem(SHELF_KEY);
+    if(raw){const s=JSON.parse(raw);if(s&&Array.isArray(s.books)&&s.books.length){shelf=s;proj=shelf.books.find(b=>b.id===shelf.currentId)||shelf.books[0];shelf.currentId=proj.id;return}}
+  }catch(e){}
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){const p=JSON.parse(raw);if(p&&p.items){p.id=p.id||uid();p.updatedAt=p.updatedAt||Date.now();shelf={books:[p],currentId:p.id};proj=p;saveShelf();return}}
+  }catch(e){}
+  const d=demoProject();d.id=uid();d.updatedAt=Date.now();
+  shelf={books:[d],currentId:d.id};proj=d;
+}
+function bookWc(book){let n=0;walk(book.items||[],it=>{if(it.type==='scene')n+=wcOfText(it.html||'')});return n}
+function switchBook(id){
+  commitEdits(true);
+  const b=shelf.books.find(x=>x.id===id);if(!b)return;
+  shelf.currentId=id;proj=b;
+  $('projTitle').value=proj.title||'';
+  $('projAuthor').value=proj.author||'';
+  saveShelf();renderTree();
+  const nid=firstItemId();if(nid)select(nid);else{$('ed').innerHTML='';$('sceneTitle').value='';$('sceneSyn').value=''}
+  updateCounts();
+}
+function newBook(){
+  commitEdits(true);
+  const b={id:uid(),title:'စာအုပ်အသစ်',author:'',items:[],updatedAt:Date.now()};
+  shelf.books.push(b);
+  switchBook(b.id);
+}
+function renderShelf(){
+  const list=$('shelfList');list.innerHTML='';
+  shelf.books.forEach(b=>{
+    const d=document.createElement('div');d.className='snap';
+    const sp=document.createElement('span');
+    const dt=b.updatedAt?new Date(b.updatedAt).toLocaleDateString():'';
+    sp.textContent=(b.id===shelf.currentId?'▶ ':'')+(b.title||'(အမည်မရှိ)')+' — '+bookWc(b)+' စကားလုံး'+(dt?' · '+dt:'');
+    const open=document.createElement('button');open.textContent='ဖွင့်';open.className='primary';
+    open.onclick=()=>{switchBook(b.id);$('ovShelf').classList.remove('open')};
+    const ren=document.createElement('button');ren.textContent='အမည်ပြောင်း';
+    ren.onclick=()=>{const t=prompt('စာအုပ်ခေါင်းစဉ် အသစ်',b.title||'');if(t!==null){b.title=t;if(b.id===shelf.currentId)$('projTitle').value=t;saveShelf();renderShelf()}};
+    const dup=document.createElement('button');dup.textContent='ပွား';
+    dup.onclick=()=>{const c=JSON.parse(JSON.stringify(b));c.id=uid();c.title=(c.title||'')+' (copy)';c.updatedAt=Date.now();shelf.books.push(c);saveShelf();renderShelf()};
+    const del=document.createElement('button');del.textContent='ဖျက်';del.className='danger';
+    del.onclick=()=>{
+      if(!confirm('“'+(b.title||'')+'” ကို စင်ကနေ ဖျက်မလား?'))return;
+      shelf.books=shelf.books.filter(x=>x.id!==b.id);
+      if(!shelf.books.length){const d2=demoProject();d2.id=uid();d2.updatedAt=Date.now();d2.title='စာအုပ်အသစ်';d2.items=[];shelf.books.push(d2)}
+      if(shelf.currentId===b.id)switchBook(shelf.books[0].id);else saveShelf();
+      renderShelf();
+    };
+    d.append(sp,open,ren,dup,del);list.appendChild(d);
+  });
+}
+function findItem(id,items,parent){
+  items=items||proj.items;parent=parent||null;
+  for(let i=0;i<items.length;i++){
+    if(items[i].id===id)return {item:items[i],parent,list:items,index:i};
+    if(items[i].children&&items[i].children.length){
+      const r=findItem(id,items[i].children,items[i]);
+      if(r)return r;
+    }
+  }
+  return null;
+}
+function walk(items,fn,depth){
+  items.forEach(it=>{fn(it,depth||0);if(it.children)walk(it.children,fn,(depth||0)+1)});
+}
+function itemWc(it){let n=wcOfText(it.html||'');(it.children||[]).forEach(c=>n+=itemWc(c));return n}
+function updateCounts(){
+  let total=0;walk(proj.items,it=>{if(it.type==='scene')total+=wcOfText(it.html||'')});
+  $('totalWc').textContent=total+' စကားလုံး';
+  const cur=selId?findItem(selId):null;
+  $('sceneWc').textContent=cur?('ဒီအပိုင်း: '+wcOfText(cur.item.html||'')+' စကားလုံး'):'';
+}
+function renderTree(){
+  const q=($('searchBox').value||'').trim().toLowerCase();
+  const treeEl=$('tree');treeEl.innerHTML='';
+  const matchIds=new Set();
+  if(q){
+    walk(proj.items,it=>{
+      const hay=(it.title+' '+(it.synopsis||'')+' '+stripHtml(it.html||'')).toLowerCase();
+      if(hay.includes(q))matchIds.add(it.id);
+    });
+    /* include ancestors of matches */
+    const addAnc=(items,anc)=>{
+      items.forEach(it=>{
+        const na=[...anc,it.id];
+        if(matchIds.has(it.id))anc.forEach(a=>matchIds.add(a));
+        if(it.children)addAnc(it.children,na);
+      });
+    };
+    addAnc(proj.items,[]);
+  }
+  const build=(items,depth)=>{
+    const wrap=document.createElement('div');
+    items.forEach(it=>{
+      if(q&&!matchIds.has(it.id))return;
+      const d=document.createElement('div');
+      d.className='node'+(it.type==='folder'?' folder':'')+(it.id===selId?' sel':'');
+      d.style.marginLeft=(depth*0)+'px';
+      const tw=document.createElement('span');tw.className='tw';tw.textContent=it.type==='folder'?'📁':'📄';
+      const t=document.createElement('span');t.className='t';t.textContent=it.title||'(အမည်မရှိ)';
+      const wc=document.createElement('span');wc.className='wc';wc.textContent=itemWc(it)+' စ';
+      d.append(tw,t,wc);
+      d.onclick=()=>{select(it.id);$('binder').classList.remove('open')};
+      wrap.appendChild(d);
+      if(it.children&&it.children.length){
+        const ch=document.createElement('div');ch.className='children';
+        ch.appendChild(build(it.children,depth+1));
+        wrap.appendChild(ch);
+      }
+    });
+    return wrap;
+  };
+  treeEl.appendChild(build(proj.items,0));
+}
+function sanitizeHtml(html){
+  const div=document.createElement('div');div.innerHTML=html||'';
+  const clean=(node)=>{
+    [...node.childNodes].forEach(n=>{
+      if(n.nodeType===3)return;
+      if(n.nodeType!==1){n.remove();return}
+      const tag=n.tagName.toLowerCase();
+      if(tag==='p'||tag==='div'){
+        const p=document.createElement('p');
+        const al=n.style&&n.style.textAlign;
+        if(al&&al!=='left'&&al!=='start')p.style.textAlign=al;
+        while(n.firstChild)p.appendChild(n.firstChild);
+        node.replaceChild(p,n);clean(p);
+      } else if(tag==='br'){/* keep */}
+      else if(tag==='b'||tag==='strong'){const b=document.createElement('b');while(n.firstChild)b.appendChild(n.firstChild);node.replaceChild(b,n);clean(b)}
+      else if(tag==='i'||tag==='em'){const em=document.createElement('i');while(n.firstChild)em.appendChild(n.firstChild);node.replaceChild(em,n);clean(em)}
+      else if(tag==='u'){const u=document.createElement('u');while(n.firstChild)u.appendChild(n.firstChild);node.replaceChild(u,n);clean(u)}
+      else if(tag==='img'){
+        const src=n.getAttribute('src')||'';
+        if(!/^data:image\//.test(src)&&!/^https?:\/\//.test(src)){n.remove();return}
+        const im=document.createElement('img');im.setAttribute('src',src);node.replaceChild(im,n);
+      }
+      else {while(n.firstChild)node.insertBefore(n.firstChild,n);n.remove()}
+    });
+  };
+  clean(div);
+  return div.innerHTML;
+}
+function commitEdits(silent){
+  if(!selId)return;
+  const f=findItem(selId);if(!f)return;
+  f.item.title=$('sceneTitle').value;
+  f.item.synopsis=$('sceneSyn').value;
+  f.item.status=$('sceneStatus').value;
+  f.item.html=sanitizeHtml($('ed').innerHTML);
+  if(!silent)saveSoon();
+}
+function select(id){
+  commitEdits(true);
+  const f=findItem(id);if(!f)return;
+  selId=id;
+  $('sceneTitle').value=f.item.title||'';
+  $('sceneSyn').value=f.item.synopsis||'';
+  $('sceneStatus').value=f.item.status||'draft';
+  $('ed').innerHTML=f.item.html||'';
+  renderTree();updateCounts();
+}
+function firstItemId(){
+  let id=null;
+  walk(proj.items,it=>{if(!id)id=it.id});
+  return id;
+}
+function newItem(type){
+  commitEdits(true);
+  const parent=selId?findItem(selId):null;
+  const item={id:uid(),type:type,title:type==='folder'?'အခန်းအသစ်':'ဇာတ်ကွက်အသစ်',synopsis:'',status:'draft',html:'',children:[],snaps:[]};
+  if(parent){
+    if(parent.item.type==='folder')parent.item.children.push(item);
+    else parent.list.splice(parent.index+1,0,item);
+  } else proj.items.push(item);
+  saveNow();renderTree();select(item.id);
+  $('sceneTitle').focus();$('sceneTitle').select();
+}
+function deleteSel(){
+  const f=selId?findItem(selId):null;if(!f)return;
+  const kids=f.item.children?f.item.children.length:0;
+  if(!confirm('“'+(f.item.title||'')+'” ကို ဖျက်မလား?'+(kids?' (အထဲက '+kids+' ခုလည်း ပါသွားမယ်)':'')))return;
+  f.list.splice(f.index,1);
+  selId=null;saveNow();renderTree();
+  const nid=firstItemId();if(nid)select(nid);else {$('ed').innerHTML='';$('sceneTitle').value='';$('sceneSyn').value=''}
+}
+function moveSel(dir){
+  const f=selId?findItem(selId):null;if(!f)return;
+  const ni=f.index+dir;
+  if(ni<0||ni>=f.list.length)return;
+  const tmp=f.list[f.index];f.list[f.index]=f.list[ni];f.list[ni]=tmp;
+  saveNow();renderTree();
+}
+function indentSel(){
+  const f=selId?findItem(selId):null;if(!f||f.index===0)return;
+  const prev=f.list[f.index-1];
+  f.list.splice(f.index,1);
+  prev.children=prev.children||[];prev.children.push(f.item);
+  saveNow();renderTree();
+}
+function outdentSel(){
+  const f=selId?findItem(selId):null;if(!f||!f.parent)return;
+  const pf=findItem(f.parent.id);if(!pf)return;
+  f.list.splice(f.index,1);
+  pf.list.splice(pf.index+1,0,f.item);
+  saveNow();renderTree();
+}
+function dupSel(){
+  const f=selId?findItem(selId):null;if(!f)return;
+  const clone=JSON.parse(JSON.stringify(f.item));
+  const reid=(it)=>{it.id=uid();(it.children||[]).forEach(reid)};
+  reid(clone);clone.title=(clone.title||'')+' (copy)';
+  f.list.splice(f.index+1,0,clone);
+  saveNow();renderTree();select(clone.id);
+}
+function splitScene(){
+  const f=selId?findItem(selId):null;if(!f)return;
+  const ed=$('ed');ed.focus();
+  const sel=window.getSelection();
+  if(!sel||sel.rangeCount===0){alert('ခွဲမဲ့နေရာမှာ cursor ချပေးပါ');return}
+  const range=sel.getRangeAt(0);
+  if(!ed.contains(range.startContainer)){alert('စာထဲမှာ cursor ချပေးပါ');return}
+  const before=document.createRange();before.setStart(ed,0);before.setEnd(range.startContainer,range.startOffset);
+  const after=document.createRange();after.setStart(range.endContainer,range.endOffset);after.setEnd(ed,ed.childNodes.length);
+  const bd=document.createElement('div');bd.appendChild(before.cloneContents());
+  const ad=document.createElement('div');ad.appendChild(after.cloneContents());
+  const beforeHtml=sanitizeHtml(bd.innerHTML),afterHtml=sanitizeHtml(ad.innerHTML);
+  if(!stripHtml(beforeHtml).trim()||!stripHtml(afterHtml).trim()){alert('နှစ်ဖက်လုံး စာကျန်မှ ခွဲနိုင်မယ်');return}
+  commitEdits(true);
+  f.item.html=beforeHtml;
+  const item={id:uid(),type:'scene',title:(f.item.title||'ဇာတ်ကွက်')+' (ဆက်)',synopsis:'',status:f.item.status,html:afterHtml,children:[],snaps:[]};
+  f.list.splice(f.index+1,0,item);
+  saveNow();renderTree();select(item.id);
+}
+function mergeScene(){
+  const flat=flattenItems(proj.items);
+  const idx=flat.findIndex(it=>it.id===selId);
+  if(idx<=0){alert('အပေါ်မှာ ဆက်စရာ ဇာတ်ကွက် မရှိပါ');return}
+  const prev=flat[idx-1],cur=flat[idx];
+  if(!confirm('“'+(cur.title||'')+'” ကို အပေါ်က “'+(prev.title||'')+'” နဲ့ ဆက်မလား?'))return;
+  prev.html=(prev.html||'')+(cur.html||'');
+  const f=findItem(cur.id);f.list.splice(f.index,1);
+  saveNow();renderTree();select(prev.id);
+}
+function prevNext(dir){
+  const flat=flattenItems(proj.items);
+  const idx=flat.findIndex(it=>it.id===selId);
+  const ni=idx+dir;
+  if(ni>=0&&ni<flat.length)select(flat[ni].id);
+}
+function renderBoard(){
+  const board=$('board');board.innerHTML='';
+  walk(proj.items,it=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('h3');h.textContent=(it.type==='folder'?'📁 ':'📄 ')+(it.title||'(အမည်မရှိ)');
+    const p=document.createElement('p');p.textContent=it.synopsis||stripHtml(it.html||'').slice(0,160);
+    const meta=document.createElement('div');meta.className='meta';
+    meta.textContent=it.type==='folder'?('အထဲ '+((it.children||[]).length)+' ခု'):itemWc(it)+' စကားလုံး';
+    card.append(h,p,meta);
+    card.onclick=()=>{select(it.id);switchView('editor')};
+    board.appendChild(card);
+  });
+}
+function renderPreview(){
+  const pv=$('preview');let html='';
+  if(proj.title)html+='<h1>'+escHtml(proj.title)+'</h1>';
+  if(proj.author)html+='<p style="text-align:center">'+escHtml(proj.author)+'</p>';
+  flattenItems(proj.items).forEach(it=>{
+    if(it.type==='folder'){html+='<h1>'+escHtml(it.title)+'</h1>';if(it.html)html+=it.html}
+    else {html+='<h2>'+escHtml(it.title)+'</h2>';if(it.html)html+=it.html}
+  });
+  pv.innerHTML=html||'<p>စာမရှိသေးပါ</p>';
+}
+function switchView(v){
+  view=v;
+  ['editor','board','preview'].forEach(k=>{
+    $(k==='editor'?'editorView':k==='board'?'boardView':'previewView').classList.toggle('hidden',k!==v);
+  });
+  document.querySelectorAll('#viewTabs button[data-view]').forEach(b=>b.classList.toggle('sel',b.dataset.view===v));
+  if(v==='board')renderBoard();
+  if(v==='preview')renderPreview();
+}
+function download(name,blob){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+}
+function fileBase(){return (proj.title||'novel').replace(/[\\/:*?"<>|]/g,'_').trim()||'novel'}
+function doExportDocx(){commitEdits(true);const bytes=buildDocx(proj,{sceneTitles:$('expSceneTitles').checked});download(fileBase()+'.docx',new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}))}
+function doExportEpub(){commitEdits(true);const bytes=buildEpub(proj,{sceneTitles:$('expSceneTitles').checked});download(fileBase()+'.epub',new Blob([bytes],{type:'application/epub+zip'}))}
+function doExportPdf(){commitEdits(true);renderPreview();switchView('preview');$('ovExport').classList.remove('open');setTimeout(()=>window.print(),300)}
+function doExportRtf(){
+  commitEdits(true);
+  const files=[];const used=new Set();
+  const uniq=(p)=>{if(!used.has(p)) {used.add(p);return p} let i=2;while(used.has(p+' ('+i+')'))i++;const q=p+' ('+i+')';used.add(q);return q};
+  const walkExp=(items,dir)=>{
+    items.forEach(it=>{
+      const safe=rtfEscapeTitle(it.title||'untitled');
+      if(it.type==='folder'){
+        if(it.html&&stripHtml(it.html).trim()){
+          const fp=uniq((dir?dir+'/':'')+safe);
+          files.push({name:fp+'.rtf',data:latin1ToBytes(htmlToRtf(it.html))});
+        }
+        walkExp(it.children||[],(dir?dir+'/':'')+safe);
+      } else {
+        const fp=uniq((dir?dir+'/':'')+safe);
+        files.push({name:fp+'.rtf',data:latin1ToBytes(htmlToRtf(it.html||''))});
+      }
+    });
+  };
+  walkExp(proj.items,'');
+  download(fileBase()+'-rtf.zip',new Blob([zipWrite(files)],{type:'application/zip'}));
+}
+function doExportJson(){
+  commitEdits(true);
+  download(fileBase()+'.json',new Blob([JSON.stringify(proj,null,1)],{type:'application/json'}));
+}
+function showReport(lines){
+  const pre=$('impReport');pre.classList.remove('hidden');pre.textContent=lines.join('\n');
+}
+async function importZipFile(file){
+  try{
+    const buf=await file.arrayBuffer();
+    const entries=await zipRead(buf);
+    const scrivxEntry=entries.find(e=>e.name.toLowerCase().endsWith('.scrivx'));
+    if(!scrivxEntry){showReport(['.scrivx မတွေ့ပါ — ဒါ Scrivener project zip ဟုတ်ရဲ့လား စစ်ပါ။']);return}
+    const {tree,map}=parseScrivx(new TextDecoder().decode(scrivxEntry.data));
+    const bySuffix={};
+    entries.forEach(e=>{bySuffix[e.name]=e});
+    const findRtf=(uuid)=>{
+      const cands=['Files/Data/'+uuid+'/content.rtf','Files/Docs/'+uuid+'.rtf'];
+      for(const key of Object.keys(bySuffix)){
+        for(const c of cands){if(key.endsWith(c))return bySuffix[key]}
+      }
+      return null;
+    };
+    let nScene=0,nFolder=0,nImg=0;
+    const fill=(items)=>{
+      items.forEach(it=>{
+        if(it.type==='folder')nFolder++;
+        else nScene++;
+        const ent=it._uuid?findRtf(it._uuid):null;
+        if(ent){
+          it.html=rtfToHtml(bytesToLatin1(ent.data));
+          const imgs=(it.html.match(/<img /g)||[]).length;nImg+=imgs;
+        }
+        delete it._uuid;
+        if(it.children)fill(it.children);
+      });
+    };
+    fill(tree);
+    if(!tree.length){showReport(['.scrivx ထဲမှာ စာမတွေ့ပါ']);return}
+    commitEdits(true);
+    const nb={id:uid(),title:file.name.replace(/\.zip$/i,'').replace(/\.scriv$/i,'')||'Imported',author:'',items:tree,updatedAt:Date.now()};
+    shelf.books.push(nb);shelf.currentId=nb.id;proj=nb;
+    saveShelf();renderTree();
+    const nid=firstItemId();if(nid)select(nid);
+    $('ovImport').classList.remove('open');
+    showReport(['✅ Import ပြီးပြီ (zip) — စာအုပ်စင်ပေါ် စာအုပ်အသစ် ရောက်သွားပြီ','အခန်း: '+nFolder+'၊ ဇာတ်ကွက်: '+nScene+'၊ ပုံ: '+nImg]);
+    $('ovImport').classList.add('open');
+  }catch(e){showReport(['❌ Import မအောင်မြင်ပါ: '+(e&&e.message?e.message:e)])}
+}
+async function importFolderFiles(fileList){
+  try{
+    const files=[];
+    for(const f of fileList){
+      const rel=f.webkitRelativePath||f.name;
+      const parts=rel.split('/');if(parts.length>1)parts.shift();
+      const path=parts.join('/');
+      const buf=new Uint8Array(await f.arrayBuffer());
+      files.push({path,data:buf});
+    }
+    const items=buildTreeFromFiles(files);
+    let nScene=0;walk(items,it=>{if(it.type==='scene')nScene++});
+    if(!items.length){showReport(['RTF/TXT ဖိုင် မတွေ့ပါ']);return}
+    const fname=(fileList[0]&&fileList[0].webkitRelativePath)?fileList[0].webkitRelativePath.split('/')[0]:'Imported';
+    commitEdits(true);
+    const nb={id:uid(),title:fname,author:'',items,updatedAt:Date.now()};
+    shelf.books.push(nb);shelf.currentId=nb.id;proj=nb;
+    saveShelf();renderTree();
+    const nid=firstItemId();if(nid)select(nid);
+    showReport(['✅ Import ပြီးပြီ (folder) — စာအုပ်စင်ပေါ် စာအုပ်အသစ် ရောက်သွားပြီ','ဇာတ်ကွက်: '+nScene+' ခု']);
+  }catch(e){showReport(['❌ Import မအောင်မြင်ပါ: '+(e&&e.message?e.message:e)])}
+}
+function bind(){
+  $('projTitle').addEventListener('input',e=>{proj.title=e.target.value;saveSoon()});
+  $('projAuthor').addEventListener('input',e=>{proj.author=e.target.value;saveSoon()});
+  $('searchBox').addEventListener('input',renderTree);
+  $('drawerBtn').onclick=()=>$('binder').classList.toggle('open');
+  $('btnNewScene').onclick=()=>newItem('scene');
+  $('btnNewFolder').onclick=()=>newItem('folder');
+  $('btnMoveUp').onclick=()=>moveSel(-1);
+  $('btnMoveDown').onclick=()=>moveSel(1);
+  $('btnIndent').onclick=indentSel;
+  $('btnOutdent').onclick=outdentSel;
+  $('btnDup').onclick=dupSel;
+  $('btnDel').onclick=deleteSel;
+  $('sceneTitle').addEventListener('input',saveSoon);
+  $('sceneSyn').addEventListener('input',saveSoon);
+  $('sceneStatus').addEventListener('change',saveSoon);
+  $('ed').addEventListener('input',()=>{saveSoon();updateCounts()});
+  document.querySelectorAll('#toolbar button[data-cmd]').forEach(b=>{
+    b.onclick=()=>{document.execCommand(b.dataset.cmd,false,null);$('ed').focus();saveSoon()};
+  });
+  $('btnImg').onclick=()=>$('imgFile').click();
+  $('imgFile').onchange=()=>{
+    const f=$('imgFile').files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{document.execCommand('insertImage',false,r.result);saveSoon()};
+    r.readAsDataURL(f);$('imgFile').value='';
+  };
+  $('btnSplit').onclick=splitScene;
+  $('btnMerge').onclick=mergeScene;
+  $('btnPrev').onclick=()=>prevNext(-1);
+  $('btnNext').onclick=()=>prevNext(1);
+  $('btnFontDown').onclick=()=>{const ed=$('ed');const s=parseInt(getComputedStyle(ed).fontSize)||19;ed.style.fontSize=Math.max(14,s-1)+'px'};
+  $('btnFontUp').onclick=()=>{const ed=$('ed');const s=parseInt(getComputedStyle(ed).fontSize)||19;ed.style.fontSize=Math.min(26,s+1)+'px'};
+  $('btnSnap').onclick=()=>{
+    const f=selId?findItem(selId):null;if(!f)return;
+    commitEdits(true);
+    f.item.snaps=f.item.snaps||[];
+    f.item.snaps.unshift({t:new Date().toLocaleString(),html:f.item.html||''});
+    saveNow();alert('Snapshot သိမ်းပြီးပြီ ('+f.item.snaps.length+' ခု)');
+  };
+  $('btnSnaps').onclick=()=>{
+    const f=selId?findItem(selId):null;if(!f)return;
+    const list=$('snapList');list.innerHTML='';
+    (f.item.snaps||[]).forEach((s,idx)=>{
+      const d=document.createElement('div');d.className='snap';
+      const sp=document.createElement('span');sp.textContent=s.t+' — '+wcOfText(s.html)+' စကားလုံး';
+      const rb=document.createElement('button');rb.textContent='ပြန်ယူ';
+      rb.onclick=()=>{if(confirm('ဒီ snapshot ကို ပြန်ယူမလား? လက်ရှိစာက အစားထိုးခံရမယ်။')){f.item.html=s.html;$('ed').innerHTML=s.html;saveNow();$('ovSnaps').classList.remove('open')}};
+      const db=document.createElement('button');db.textContent='ဖျက်';db.className='danger';
+      db.onclick=()=>{f.item.snaps.splice(idx,1);saveNow();$('btnSnaps').click()};
+      d.append(sp,rb,db);list.appendChild(d);
+    });
+    if(!(f.item.snaps||[]).length)list.innerHTML='<p class="hint">Snapshot မရှိသေးပါ</p>';
+    $('ovSnaps').classList.add('open');
+  };
+  $('btnSnapClose').onclick=()=>$('ovSnaps').classList.remove('open');
+  document.querySelectorAll('#viewTabs button[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+  $('btnShelf').onclick=()=>{renderShelf();$('ovShelf').classList.add('open')};
+  $('btnShelfClose').onclick=()=>$('ovShelf').classList.remove('open');
+  $('btnShelfNew').onclick=()=>{newBook();$('ovShelf').classList.remove('open')};
+  $('btnImport').onclick=()=>{$('impReport').classList.add('hidden');$('ovImport').classList.add('open')};
+  $('btnImpClose').onclick=()=>$('ovImport').classList.remove('open');
+  $('btnImpZip').onclick=()=>$('impZip').click();
+  $('impZip').onchange=()=>{const f=$('impZip').files[0];if(f)importZipFile(f);$('impZip').value=''};
+  $('btnImpFolder').onclick=()=>$('impFolder').click();
+  $('impFolder').onchange=()=>{if($('impFolder').files.length)importFolderFiles($('impFolder').files);$('impFolder').value=''};
+  $('btnImpFiles').onclick=()=>$('impFiles').click();
+  $('impFiles').onchange=()=>{if($('impFiles').files.length)importFolderFiles($('impFiles').files);$('impFiles').value=''};
+  $('btnImpJson').onclick=()=>$('impJson').click();
+  $('impJson').onchange=()=>{
+    const f=$('impJson').files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{try{const p=JSON.parse(r.result);if(p&&p.items){
+      p.id=p.id||uid();p.updatedAt=Date.now();
+      commitEdits(true);
+      const ex=shelf.books.find(x=>x.id===p.id);
+      if(ex)Object.assign(ex,p);else shelf.books.push(p);
+      shelf.currentId=p.id;proj=shelf.books.find(x=>x.id===p.id);
+      $('projTitle').value=proj.title||'';$('projAuthor').value=proj.author||'';
+      saveShelf();renderTree();const nid=firstItemId();if(nid)select(nid);showReport(['✅ Project JSON ဖွင့်ပြီးပြီ — စာအုပ်စင်ပေါ် ရောက်သွားပြီ'])
+    }else showReport(['JSON ထဲမှာ project မတွေ့ပါ'])}catch(e){showReport(['JSON ဖတ်မရပါ: '+e.message])}};
+    r.readAsText(f);$('impJson').value='';
+  };
+  $('btnExport').onclick=()=>$('ovExport').classList.add('open');
+  $('btnExpClose').onclick=()=>$('ovExport').classList.remove('open');
+  $('btnExpDocx').onclick=()=>{doExportDocx();$('ovExport').classList.remove('open')};
+  $('btnExpEpub').onclick=()=>{doExportEpub();$('ovExport').classList.remove('open')};
+  $('btnExpPdf').onclick=doExportPdf;
+  $('btnExpRtf').onclick=()=>{doExportRtf();$('ovExport').classList.remove('open')};
+  $('btnExpJson').onclick=()=>{doExportJson();$('ovExport').classList.remove('open')};
+  $('btnSave').onclick=doExportJson;
+  document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open')}));
+  window.addEventListener('beforeunload',()=>{try{commitEdits(true);saveShelf()}catch(e){}});
+}
+loadShelf();
+$('projTitle').value=proj.title||'';
+$('projAuthor').value=proj.author||'';
+bind();
+renderTree();
+const nid=firstItemId();if(nid)select(nid);
+updateCounts();
+</script>
