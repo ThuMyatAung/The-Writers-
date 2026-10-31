@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Novel Studio — ဝတ္ထု Editor</title>
-<!-- Novel Studio v1.1 — bookshelf (multi-book); color theme unchanged -->
+<!-- Novel Studio v1.2 — \uc fix, Noto Sans Myanmar + font picker, compact mobile chrome -->
 <style>
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -16,7 +16,9 @@
   button.primary:hover{background:#744a21}
   button.danger{color:#a33327;border-color:#e0b4ad;background:#fff6f4}
   input[type=text],select,textarea{border:1px solid #d8cdb4;border-radius:10px;padding:7px 10px;background:#fffdf8;color:#2b2620;width:100%}
-  header{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid #ddd2b8;background:#efe7d2;flex-wrap:wrap}
+  header{flex:0 0 auto;display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid #ddd2b8;background:#efe7d2;flex-wrap:wrap;position:relative}
+  #phoneMenuBtn{display:none}
+  #phoneMenu{position:absolute;top:calc(100% + 4px);right:10px;z-index:60;background:#fffdf8;border:1px solid #ddd2b8;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);padding:10px;display:flex;flex-direction:column;gap:6px;width:220px}
   header h1{font-size:18px;margin:0 auto 0 0;white-space:nowrap}
   header .titlewrap{display:flex;gap:8px;align-items:center;flex:1 1 280px;min-width:0}
   header .titlewrap input{font-weight:700}
@@ -49,7 +51,7 @@
   #toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   #toolbar button{padding:6px 10px}
   #toolbar .sep{width:1px;height:22px;background:#d8cdb4}
-  #ed{max-width:760px;margin:0 auto;padding:22px 18px 40px;outline:none;min-height:50vh;font-family:"Noto Serif Myanmar","Padauk","Myanmar Text",serif;font-size:19px;line-height:1.9;background:#fffdf8;border-left:1px solid #efe6cd;border-right:1px solid #efe6cd}
+  #ed{max-width:760px;margin:0 auto;padding:22px 18px 40px;outline:none;min-height:50vh;font-family:"Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif;font-size:19px;line-height:1.9;background:#fffdf8;border-left:1px solid #efe6cd;border-right:1px solid #efe6cd}
   #ed:empty:before{content:attr(data-ph);color:#a2937a}
   #ed p{margin:0 0 12px}
   #ed img{max-width:100%;height:auto;border-radius:6px}
@@ -62,7 +64,7 @@
   .card p{margin:0;color:#6b5e45;font-size:14px;white-space:pre-wrap}
   .card .meta{margin-top:8px;font-size:12px;color:#8a7a5c}
   /* Preview */
-  #preview{max-width:760px;margin:0 auto;padding:22px 18px 60px;font-family:"Noto Serif Myanmar","Padauk","Myanmar Text",serif;font-size:19px;line-height:1.9}
+  #preview{max-width:760px;margin:0 auto;padding:22px 18px 60px;font-family:"Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif;font-size:19px;line-height:1.9}
   #preview h1,#preview h2{font-family:"Noto Sans Myanmar","Padauk",sans-serif}
   #preview h1{text-align:center}
   #preview img{max-width:100%;height:auto}
@@ -82,8 +84,22 @@
     #binder{position:fixed;inset:0 auto 0 0;width:86vw;max-width:340px;z-index:40;transform:translateX(-105%);transition:transform .2s;box-shadow:10px 0 30px rgba(0,0,0,.25)}
     #binder.open{transform:none}
     #drawerBtn{display:inline-block}
-    #ed{font-size:18px;padding:18px 14px 40px;border:none}
-    header h1{font-size:16px}
+    header{flex-wrap:nowrap;padding:6px 10px}
+    header h1{display:none}
+    header input[type=text]{padding:6px 8px}
+    #projAuthor{display:none}
+    #totalWc{display:none}
+    #btnShelf,#btnImport,#btnExport,#btnSave{display:none}
+    #phoneMenuBtn{display:inline-block}
+    #viewTabs{flex-wrap:nowrap;overflow-x:auto;padding:6px 10px}
+    #viewTabs button{flex:0 0 auto;padding:6px 10px;font-size:14px}
+    #viewTabs .pill{flex:0 0 auto;font-size:12px}
+    #edTop{padding:6px 10px;gap:6px}
+    #edTop .row input[type=text]{padding:6px 8px}
+    #toolbar button{padding:5px 8px;font-size:14px}
+    #toolbar select{padding:5px 6px;font-size:14px}
+    #ed{font-size:18px;padding:12px 12px 30px;border:none}
+    #edNav{padding:8px 10px}
   }
   @media print{
     body{height:auto;overflow:visible;display:block}
@@ -107,6 +123,15 @@
   <button id="btnImport">Import</button>
   <button id="btnExport" class="primary">Export</button>
   <button id="btnSave">ဖိုင်သိမ်း</button>
+  <button id="phoneMenuBtn" title="Menu">⋯</button>
+  <div id="phoneMenu" class="hidden">
+    <input id="phoneAuthor" type="text" placeholder="စာရေးသူ">
+    <span class="pill" id="phoneWc"></span>
+    <button data-act="shelf">📚 စာအုပ်စင်</button>
+    <button data-act="import">Import</button>
+    <button data-act="export" class="primary">Export</button>
+    <button data-act="save">ဖိုင်သိမ်း</button>
+  </div>
 </header>
 
 <div id="layout">
@@ -151,6 +176,13 @@
           <input id="sceneSyn" type="text" placeholder="အကျဉ်းချုပ် (synopsis) — ကတ်မှာ ပြမယ်">
         </div>
         <div id="toolbar">
+          <select id="fontSel" style="width:auto;flex:0 0 auto">
+            <option value="noto">Noto Sans Myanmar</option>
+            <option value="sangam">Myanmar Sangam MN</option>
+            <option value="serif">Noto Serif Myanmar</option>
+            <option value="padauk">Padauk</option>
+            <option value="system">System</option>
+          </select>
           <button data-cmd="bold"><b>B</b></button>
           <button data-cmd="italic"><i>I</i></button>
           <button data-cmd="underline"><u>U</u></button>
@@ -347,6 +379,7 @@ function rtfToHtml(rtf){
   let i=0;const n=rtf.length;
   let html='';let paraOpen=false;let align='left';
   let fmt={b:false,i:false,u:false};
+  let ucCount=1;
   let stack=[];
   let runText='';
   const curSkip=()=>stack.length?!!stack[stack.length-1].skip:false;
@@ -421,18 +454,19 @@ function rtfToHtml(rtf){
         case 'ql':align='left';break;
         case 'qr':align='right';break;
         case 'qj':align='justify';break;
+        case 'uc': ucCount=(num!==null?num:1); break;
         case 'u':{
           if(num!==null){
             let code=num;if(code<0)code+=65536;
             openPara();
-            const skipFallback=()=>{if(rtf[i]==="'")i+=3;else if(i<n)i++};
+            const skipFallbacks=()=>{for(let k=0;k<ucCount;k++){if(rtf[i]==="'")i+=3;else if(i<n)i++}};
             if(code>=0xD800&&code<=0xDBFF){
-              skipFallback();
+              skipFallbacks();
               const m2=/^\\u(-?\d+)/.exec(rtf.slice(i));
               if(m2){let lo=parseInt(m2[1],10);if(lo<0)lo+=65536;
-                if(lo>=0xDC00&&lo<=0xDFFF){runText+=String.fromCharCode(code,lo);i+=m2[0].length;if(rtf[i]===' ')i++;skipFallback();break}}
+                if(lo>=0xDC00&&lo<=0xDFFF){runText+=String.fromCharCode(code,lo);i+=m2[0].length;if(rtf[i]===' ')i++;skipFallbacks();break}}
               runText+=String.fromCharCode(code);
-            } else { runText+=String.fromCharCode(code); skipFallback(); }
+            } else { runText+=String.fromCharCode(code); skipFallbacks(); }
           }
           break;
         }
@@ -661,7 +695,7 @@ function buildEpub(proj,opts){
   const enc=new TextEncoder();
   const files=[{name:'mimetype',data:enc.encode('application/epub+zip')}];
   files.push({name:'META-INF/container.xml',data:enc.encode('<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')});
-  const css='body{font-family:serif;line-height:1.7}h1{text-align:center}img{max-width:100%}';
+  const css='body{font-family:"Noto Sans Myanmar","Myanmar Sangam MN",sans-serif;line-height:1.7}h1{text-align:center}img{max-width:100%}';
   files.push({name:'OEBPS/style.css',data:enc.encode(css)});
   const flat=flattenItems(proj.items);
   const manifest=['<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>','<item id="css" href="style.css" media-type="text/css"/>'];
@@ -707,6 +741,19 @@ function buildEpub(proj,opts){
 <script>
 /* ---- App logic ---- */
 const $=id=>document.getElementById(id);
+const FONTS={
+  noto:'"Noto Sans Myanmar","Myanmar Sangam MN","Padauk",sans-serif',
+  sangam:'"Myanmar Sangam MN","Noto Sans Myanmar",sans-serif',
+  serif:'"Noto Serif Myanmar","Myanmar Sangam MN",serif',
+  padauk:'"Padauk","Noto Sans Myanmar",sans-serif',
+  system:'sans-serif'
+};
+function applyFont(key){
+  const f=FONTS[key]||FONTS.noto;
+  $('ed').style.fontFamily=f;
+  $('preview').style.fontFamily=f;
+  try{localStorage.setItem('novel_studio_font',key)}catch(e){}
+}
 const LS_KEY='novel_studio_v1';
 const SHELF_KEY='novel_studio_shelf_v1';
 let proj=null, selId=null, view='editor', saveTimer=null;
@@ -1124,6 +1171,19 @@ function bind(){
   $('projAuthor').addEventListener('input',e=>{proj.author=e.target.value;saveSoon()});
   $('searchBox').addEventListener('input',renderTree);
   $('drawerBtn').onclick=()=>$('binder').classList.toggle('open');
+  $('phoneMenuBtn').onclick=()=>{
+    $('phoneAuthor').value=$('projAuthor').value||'';
+    $('phoneWc').textContent=$('totalWc').textContent;
+    $('phoneMenu').classList.toggle('hidden');
+  };
+  $('phoneAuthor').addEventListener('input',e=>{$('projAuthor').value=e.target.value;saveSoon()});
+  document.querySelectorAll('#phoneMenu button[data-act]').forEach(b=>{
+    b.onclick=()=>{
+      $('phoneMenu').classList.add('hidden');
+      const map={shelf:'btnShelf',import:'btnImport',export:'btnExport',save:'btnSave'};
+      const t=$(map[b.dataset.act]);if(t)t.click();
+    };
+  });
   $('btnNewScene').onclick=()=>newItem('scene');
   $('btnNewFolder').onclick=()=>newItem('folder');
   $('btnMoveUp').onclick=()=>moveSel(-1);
@@ -1133,6 +1193,7 @@ function bind(){
   $('btnDup').onclick=dupSel;
   $('btnDel').onclick=deleteSel;
   $('sceneTitle').addEventListener('input',saveSoon);
+  $('fontSel').onchange=()=>applyFont($('fontSel').value);
   $('sceneSyn').addEventListener('input',saveSoon);
   $('sceneStatus').addEventListener('change',saveSoon);
   $('ed').addEventListener('input',()=>{saveSoon();updateCounts()});
@@ -1217,6 +1278,9 @@ loadShelf();
 $('projTitle').value=proj.title||'';
 $('projAuthor').value=proj.author||'';
 bind();
+let savedFont='noto';try{savedFont=localStorage.getItem('novel_studio_font')||'noto'}catch(e){}
+if(!FONTS[savedFont])savedFont='noto';
+$('fontSel').value=savedFont;applyFont(savedFont);
 renderTree();
 const nid=firstItemId();if(nid)select(nid);
 updateCounts();
